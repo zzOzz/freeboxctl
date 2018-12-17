@@ -15,12 +15,16 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/Sirupsen/logrus"
 	"encoding/json"
 	"github.com/zzOzz/freeboxctl/freebox"
+	"regexp"
 )
+
+var validArgs = []string{}
 
 // downloadsCmd represents the downloads command
 var filesCmd = &cobra.Command{
@@ -50,7 +54,15 @@ to quickly create a Cobra application.`,
 		//if err != nil {
 		//	logrus.Fatalf("fbx.Login(): %v", err)
 		//}
-		stats, err := fbx.Files(args[0])
+
+		var validBase64 = regexp.MustCompile(`^[-A-Za-z0-9+=]{1,50}|=[^=]|={3,}$`)
+		var file = ""
+		if (validBase64.MatchString(args[0])) {
+			file = args[0]
+		} else {
+			file = base64.StdEncoding.EncodeToString([]byte(args[0]))
+		}
+		stats, err := fbx.Files(file)
 		if err != nil {
 			logrus.Fatalf("fbx.Files(): %v", err)
 		}
@@ -62,9 +74,42 @@ to quickly create a Cobra application.`,
 		}
 		fmt.Println(string(b))
 	},
+	ValidArgs: validArgs,
+}
+
+func generatePathCompletion(file freebox.FileResult) {
+	logrus.Info("tree - ", file.Name)
+	//files, err := freebox.GetInstance().Files(base64.StdEncoding.EncodeToString([]byte(file.Name)))
+	files, err := freebox.GetInstance().Files(file.Path)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for _, file := range *files {
+		// element is the element from someSlice for where we are
+		//fmt.Print("ici:" + file.Name)
+		decoded, _ := base64.StdEncoding.DecodeString(file.Path)
+		if file.Name != "." && file.Name != ".." {
+			filesCmd.ValidArgs = append(filesCmd.ValidArgs, "/" + string(decoded))
+			if len(*files) > 1 {
+				generatePathCompletion(file)
+			}
+		}
+	}
 }
 
 func init() {
+
+	//files, err := freebox.GetInstance().Files(base64.StdEncoding.EncodeToString([]byte("")))
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//for _, file := range *files {
+	//	// element is the element from someSlice for where we are
+	//	//fmt.Print("ici:" + file.Name)
+	//	filesCmd.ValidArgs = append(filesCmd.ValidArgs, file.Name)
+	//}
+	// var rootPath = freebox.FileResult{Name:""}
+	// generatePathCompletion(rootPath)
 	getCmd.AddCommand(filesCmd)
 
 	// Here you will define your flags and configuration settings.

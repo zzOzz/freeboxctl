@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/zzOzz/freeboxctl/freebox"
 	"os"
 )
 
@@ -32,6 +33,8 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if(ZshCompletion) {
+			var rootPath = freebox.FileResult{Name:""}
+			generatePathCompletion(rootPath)
 			rootCmd.GenZshCompletion(os.Stdout)
 		}
 		if(BashCompletion) {
