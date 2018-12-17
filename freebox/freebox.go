@@ -123,6 +123,36 @@ type DownloadResult struct {
 	Size            int    `json:"size"`
 }
 
+//            "path": "L0Rpc3F1ZSBkdXIvRW5yZWdpc3RyZW1lbnRz",
+//            "filecount": 0,
+//            "link": false,
+//            "modification": 1362005535,
+//            "foldercount": 0,
+//            "name": "Enregistrements",
+//            "index": 1,
+//            "mimetype": "inode/directory",
+//            "hidden": false,
+//            "type": "dir",
+//            "size": 4096
+type FileResult struct {
+	Path         	string	`json:"path"`
+	FileCount    	int		`json:"filecount"`
+	Link	     	bool 	`json:"link"`
+	Modification	int 	`json:"modification"`
+	FolderCount     int    	`json:"foldercount"`
+	Name			string 	`json:"name"`
+	Index			int 	`json:"index"`
+	MimeType	    string 	`json:"mimetype"`
+	Hidden          bool 	`json:"hidden"`
+	Type			string 	`json:"type"`
+	Size			int    	`json:"size"`
+}
+// FilesResult TODO
+type apiResponseFile struct {
+	Success	bool        	`json:"success"`
+	Result	[]FileResult 	`json:"result"`
+}
+
 // apiResponseDownload TODO
 type apiResponseDownload struct {
 	Success bool             `json:"success"`
@@ -521,6 +551,22 @@ func (c *Client) Downloads() (*[]DownloadResult, error) {
 	}
 
 	var response apiResponseDownload
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Result, nil
+}
+
+// Files retrives files
+func (c *Client) Files(path string) (*[]FileResult, error) {
+	body, err := c.GetResource("fs/ls/" + path, true)
+	if err != nil {
+		return nil, err
+	}
+
+	var response apiResponseFile
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return nil, err
