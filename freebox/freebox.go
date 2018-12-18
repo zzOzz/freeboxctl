@@ -218,6 +218,19 @@ type apiResponseLogin struct {
 	} `json:"result"`
 }
 
+// apiResponseTasks TODO
+type apiResponseTasks struct {
+	Success bool `json:"success"`
+	Result []struct {
+		Id     	int   `json:"id,omitempty"`
+		From   	string `json:"from,omitempty"`
+		To 		string `json:"to,omitempty"`
+		Type	string `json:"type,omitempty"`
+		State	string `json:"state,omitempty"`
+	} `json:"result"`
+}
+
+
 // Client is the Freebox API client
 type Client struct {
 	URL string
@@ -227,6 +240,15 @@ type Client struct {
 	client     *http.Client
 }
 
+
+// apiExtractPayload TODO
+type apiExtractPayload struct {
+	Src      string `json:"src"`
+	Dst string `json:"dst"`
+	Password   string `json:"password,omitempty"`
+	DeleteArchive   bool `json:"delete_archive,omitempty"`
+	OverWrite   bool `json:"overwrite,omitempty"`
+}
 var instance *Client
 var once sync.Once
 
@@ -588,14 +610,6 @@ func (c *Client) DownloadFile(path string) ([]byte, error) {
 // AddDownload add download url
 func (c *Client) AddDownload(downloadURL string) (interface{}, error) {
 
-	//download_url (string) – The URL
-	//download_url_list (string) – A list of URL separated by a new line delimiter (use download_url or download_url_list)
-	//download_dir (string) – The download destination directory (optional: will use the configuration download_dir by default)
-	//recursive (bool) – If true the download will be recursive
-	//username (string) – Auth username (optional)
-	//password (string) – Auth password (optional)
-	//archive_password (string) – The password required to extract downloaded content (only relevant for nzb)
-	//cookies (string) – The http cookies (to be able to pass session cookies along with url)
 	apiURL := c.URL
 	resource := fmt.Sprintf("%s%s", c.apiVersion.authBaseURL(), "downloads/add")
 	data := url.Values{}
@@ -631,20 +645,71 @@ func (c *Client) AddDownload(downloadURL string) (interface{}, error) {
 
 	return response, err
 
-	//body, err := c.PostResource("downloads/add",true)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//var response AddDownloadResponse
-	//err = json.Unmarshal(body, &response)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//return &response.Result, nil
+}
 
-	// return nil, nil
+// ExtractFile
+func (c *Client) ExtractFile(file string, dest string) (interface{}, error) {
+	var data apiExtractPayload
+	data.Src = file
+	data.Dst = dest
+	body, err := c.PostResource("fs/extract/", data,true)
+	if err != nil {
+		return nil, err
+	}
+
+	var response interface{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, err
+}
+
+// FSTasks retrieve download stats
+func (c *Client) FSTasks() (*apiResponseTasks, error) {
+	body, err := c.GetResource("fs/tasks", true)
+	if err != nil {
+		return nil, err
+	}
+	var response apiResponseTasks
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// RemoveFSTasks remove fs task
+func (c *Client) RemoveTask(taskID int) (interface{}, error) {
+
+	body, err := c.DeleteResource("fs/tasks/"+strconv.Itoa(taskID), true)
+	if err != nil {
+		return nil, err
+	}
+
+	var response interface{}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// RemoveAllFSTasks remove fs task
+func (c *Client) RemoveAllFSTask() (error) {
+
+	tasks, err := c.FSTasks()
+	if err != nil {
+		return err
+	}
+	for _, task := range tasks.Result {
+		c.RemoveTask(task.Id)
+	}
+
+	return nil
 }
 
 // RemoveDownload add download url

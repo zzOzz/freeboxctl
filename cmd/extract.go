@@ -15,16 +15,19 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/Sirupsen/logrus"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"github.com/Sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"github.com/zzOzz/freeboxctl/freebox"
+	"path"
+	"regexp"
 )
 
-// downloadsCmd represents the downloads command
-var downloadsCmd = &cobra.Command{
-	Use:   "downloads",
+// extractCmd represents the completion command
+var extractCmd = &cobra.Command{
+	Use:   "extract",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -33,10 +36,19 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		var validBase64 = regexp.MustCompile(`^[-A-Za-z0-9+=]{1,50}|=[^=]|={3,}$`)
+		var file = ""
+		var directory = "L0ZyZWVib3gvZG93bmxvYWRz"
+		if (validBase64.MatchString(args[0])) {
+			file = args[0]
+		} else {
+			directory = base64.StdEncoding.EncodeToString([]byte(path.Dir(args[0])))
+			file = base64.StdEncoding.EncodeToString([]byte(args[0]))
+		}
 		fbx := freebox.GetInstance()
-		stats, err := fbx.Downloads()
+		stats, err := fbx.ExtractFile(file, directory)
 		if err != nil {
-			logrus.Fatalf("fbx.Downloads(): %v", err)
+			logrus.Fatalf("fbx.Extract(): %v", err)
 		}
 		b, err := json.Marshal(stats)
 		if err != nil {
@@ -48,15 +60,5 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	getCmd.AddCommand(downloadsCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// downloadsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// downloadsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.AddCommand(extractCmd)
 }

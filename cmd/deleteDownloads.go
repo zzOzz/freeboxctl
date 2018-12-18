@@ -15,15 +15,13 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/Sirupsen/logrus"
-	"encoding/json"
 	"github.com/zzOzz/freeboxctl/freebox"
 )
 
-// downloadsCmd represents the downloads command
-var downloadsCmd = &cobra.Command{
+// deleteDownloadCmd represents the delete command
+var deleteDownloadCmd = &cobra.Command{
 	Use:   "downloads",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
@@ -34,29 +32,14 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fbx := freebox.GetInstance()
-		stats, err := fbx.Downloads()
+		err := fbx.CleanDownloads()
 		if err != nil {
-			logrus.Fatalf("fbx.Downloads(): %v", err)
+			logrus.Fatalf("fbx.CleanDownloads(): %v", err)
 		}
-		b, err := json.Marshal(stats)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		fmt.Println(string(b))
 	},
 }
 
 func init() {
-	getCmd.AddCommand(downloadsCmd)
+	deleteCmd.AddCommand(deleteDownloadCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// downloadsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// downloadsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

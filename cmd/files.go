@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -24,6 +25,7 @@ import (
 )
 
 var validArgs = []string{}
+var downloadFile = false
 
 // downloadsCmd represents the downloads command
 var filesCmd = &cobra.Command{
@@ -36,42 +38,48 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// fbx := freebox.New()
 		fbx := freebox.GetInstance()
+		if len(args) > 0 {
+			var validBase64 = regexp.MustCompile(`^[-A-Za-z0-9+=]{1,50}|=[^=]|={3,}$`)
+			var file = ""
+			if (validBase64.MatchString(args[0])) {
+				file = args[0]
+			} else {
+				file = base64.StdEncoding.EncodeToString([]byte(args[0]))
+			}
+			if downloadFile {
+				stats, err := fbx.DownloadFile(file)
+				if err != nil {
+					logrus.Fatalf("fbx.Files(): %v", err)
+				}
+				fmt.Print(string(stats))
+			} else {
+				stats, err := fbx.Files(file)
+				if err != nil {
+					logrus.Fatalf("fbx.Files(): %v", err)
+				}
+				b, err := json.Marshal(stats)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				fmt.Println(string(b))
+			}
 
-		//err := fbx.Connect()
-		//if err != nil {
-		//	logrus.Fatalf("fbx.Connect(): %v", err)
-		//}
-		//
-		//err = fbx.Authorize()
-		//if err != nil {
-		//	logrus.Fatalf("fbx.Authorize(): %v", err)
-		//}
-		//
-		//err = fbx.Login()
-		//if err != nil {
-		//	logrus.Fatalf("fbx.Login(): %v", err)
-		//}
-
-		var validBase64 = regexp.MustCompile(`^[-A-Za-z0-9+=]{1,50}|=[^=]|={3,}$`)
-		var file = ""
-		if (validBase64.MatchString(args[0])) {
-			file = args[0]
 		} else {
-			file = base64.StdEncoding.EncodeToString([]byte(args[0]))
+
+			stats, err := fbx.Files("")
+			if err != nil {
+				logrus.Fatalf("fbx.Files(): %v", err)
+			}
+			b, err := json.Marshal(stats)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			fmt.Println(string(b))
 		}
-		stats, err := fbx.DownloadFile(file)
-		if err != nil {
-			logrus.Fatalf("fbx.Files(): %v", err)
-		}
-		fmt.Print(string(stats))
-		//b, err := json.Marshal(stats)
-		//if err != nil {
-		//	fmt.Println(err)
-		//	return
-		//}
-		//fmt.Println(string(b))
+
 	},
 	ValidArgs: validArgs,
 }
@@ -97,27 +105,6 @@ func generatePathCompletion(file freebox.FileResult) {
 }
 
 func init() {
-
-	//files, err := freebox.GetInstance().Files(base64.StdEncoding.EncodeToString([]byte("")))
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//for _, file := range *files {
-	//	// element is the element from someSlice for where we are
-	//	//fmt.Print("ici:" + file.Name)
-	//	filesCmd.ValidArgs = append(filesCmd.ValidArgs, file.Name)
-	//}
-	// var rootPath = freebox.FileResult{Name:""}
-	// generatePathCompletion(rootPath)
+	filesCmd.Flags().BoolVarP(&downloadFile, "download","d", false, "download file")
 	getCmd.AddCommand(filesCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// downloadsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// downloadsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
