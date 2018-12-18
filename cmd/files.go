@@ -17,9 +17,8 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/spf13/cobra"
 	"github.com/Sirupsen/logrus"
-	"encoding/json"
+	"github.com/spf13/cobra"
 	"github.com/zzOzz/freeboxctl/freebox"
 	"regexp"
 )
@@ -62,17 +61,17 @@ to quickly create a Cobra application.`,
 		} else {
 			file = base64.StdEncoding.EncodeToString([]byte(args[0]))
 		}
-		stats, err := fbx.Files(file)
+		stats, err := fbx.DownloadFile(file)
 		if err != nil {
 			logrus.Fatalf("fbx.Files(): %v", err)
 		}
-		//fmt.Println(stats)
-		b, err := json.Marshal(stats)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		fmt.Println(string(b))
+		fmt.Print(string(stats))
+		//b, err := json.Marshal(stats)
+		//if err != nil {
+		//	fmt.Println(err)
+		//	return
+		//}
+		//fmt.Println(string(b))
 	},
 	ValidArgs: validArgs,
 }

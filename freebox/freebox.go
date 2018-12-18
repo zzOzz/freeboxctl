@@ -575,6 +575,16 @@ func (c *Client) Files(path string) (*[]FileResult, error) {
 	return &response.Result, nil
 }
 
+// Files retrives files
+func (c *Client) DownloadFile(path string) ([]byte, error) {
+	body, err := c.GetResource("dl/" + path, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
 // AddDownload add download url
 func (c *Client) AddDownload(downloadURL string) (interface{}, error) {
 
