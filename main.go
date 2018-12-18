@@ -20,6 +20,6 @@ import (
 )
 
 func main() {
-	logrus.SetLevel(logrus.FatalLevel)
+	logrus.SetLevel(logrus.InfoLevel)
 	cmd.Execute()
 }

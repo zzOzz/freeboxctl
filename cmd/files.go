@@ -85,7 +85,7 @@ to quickly create a Cobra application.`,
 }
 
 func generatePathCompletion(file freebox.FileResult) {
-	logrus.Info("tree - ", file.Name)
+	logrus.Debug("tree - ", file.Name)
 	//files, err := freebox.GetInstance().Files(base64.StdEncoding.EncodeToString([]byte(file.Name)))
 	files, err := freebox.GetInstance().Files(file.Path)
 	if err != nil {

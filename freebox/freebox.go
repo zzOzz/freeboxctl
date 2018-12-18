@@ -277,8 +277,7 @@ func GetInstance() *Client {
 // New returns a `Client` object with standard configuration
 func New() *Client {
 	client := Client{
-		//URL:    "http://mafreebox.free.fr/",
-		URL:    "https://20100.freeboxos.fr:49459/",
+		URL:    "http://mafreebox.free.fr/",
 		client: &http.Client{},
 		App: App{
 			Identifier: "go-freebox",
@@ -289,6 +288,9 @@ func New() *Client {
 	}
 	if os.Getenv("GOFBX_TOKEN") != "" {
 		client.App.token = os.Getenv("GOFBX_TOKEN")
+	}
+	if os.Getenv("GOFBX_URL") != "" {
+		client.URL = os.Getenv("GOFBX_URL")
 	}
 	return &client
 }
@@ -436,7 +438,7 @@ func (c *Client) Connect() error {
 		return err
 	}
 
-	logrus.Infof("API version: FreeboxID=%q DeviceName=%q Version=%q DeviceType=%q", c.apiVersion.FreeboxID, c.apiVersion.DeviceName, c.apiVersion.Version, c.apiVersion.DeviceType)
+	logrus.Debugf("API version: FreeboxID=%q DeviceName=%q Version=%q DeviceType=%q", c.apiVersion.FreeboxID, c.apiVersion.DeviceName, c.apiVersion.Version, c.apiVersion.DeviceType)
 
 	return nil
 }
